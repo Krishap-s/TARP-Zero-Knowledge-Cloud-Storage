@@ -9,5 +9,5 @@ def get_database():
     if client != None:
         return client
     client = MongoClient(os.environ.get("DATABASE_URL"))
-    db = client.encrypt_everywhere
+    db = client[os.environ("DATABASE_NAME")]
     return db
