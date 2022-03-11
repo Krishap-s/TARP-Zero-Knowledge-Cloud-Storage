@@ -1,13 +1,13 @@
 import os
-from pymongo import MongoClient
+from pymongo import MongoClient,database
 import pymongo
 
-client = None
+db:database.Database = None
 
-def get_database():
-    global client
-    if client != None:
-        return client
+def get_database() -> database.Database:
+    global db
+    if db != None:
+        return db
     client = MongoClient(os.environ.get("DATABASE_URL"))
-    db = client[os.environ("DATABASE_NAME")]
+    db = client[os.environ["DATABASE_NAME"]]
     return db
