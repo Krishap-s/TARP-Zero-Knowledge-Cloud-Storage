@@ -1,11 +1,11 @@
 from pydantic import EmailStr
-from typing import Union
-from .schema import AddUserSchema, SignInSchema
+from .schema import AddUserSchema, GetUserSchema, SignInSchema
 from .mongo import Repo
 from pymongo.database import Database 
 from bson import BSON
 from models.user import User
 from Cryptodome.Hash import SHA256
+from fastapi.exceptions import HTTPException
 
 class Service():
     repo:Repo = None
@@ -24,20 +24,20 @@ class Service():
         return id
     
     def GetSalt(self,inp:EmailStr) -> str:
-        user = self.repo.GetUserByEmail(inp.email)
+        user = self.repo.GetUserByEmail(inp)
         if user == None:
-            raise Exception("user not found")
+            raise HTTPException(status_code="404",detail="user not found")
         return user.salt
 
 
     def SignIn(self,inp:SignInSchema) -> User:
         user = self.repo.GetUserByEmail(inp.email)
         if user == None:
-            raise Exception("user not found")
+            raise HTTPException(status_code="404",detail="user not found")
         hasher = SHA256.new()
         hasher.update(inp.derived_key.encode())
         if hasher.hexdigest() != user.derived_key_hash:
-            raise Exception("invalid credentials")
+            raise HTTPException(status_code="403",detail="invalid credentials")
         else:
             return user
 

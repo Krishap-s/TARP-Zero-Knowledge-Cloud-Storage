@@ -10,3 +10,8 @@ class AddUserSchema(BaseModel):
 class SignInSchema(BaseModel):
     email:EmailStr
     derived_key:str
+
+class GetUserSchema(BaseModel):
+    name:str
+    email:EmailStr
+    encrypted_master_password:str
