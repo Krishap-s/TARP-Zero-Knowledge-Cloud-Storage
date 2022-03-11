@@ -1,4 +1,5 @@
 from pydantic import EmailStr
+from typing import Union
 from .schema import AddUserSchema, SignInSchema
 from .mongo import Repo
 from pymongo.database import Database 
@@ -21,6 +22,13 @@ class Service():
         inp.derived_key = hasher.hexdigest()
         id = self.repo.AddUser(inp)
         return id
+    
+    def GetSalt(self,inp:EmailStr) -> str:
+        user = self.repo.GetUserByEmail(inp.email)
+        if user == None:
+            raise Exception("user not found")
+        return user.salt
+
 
     def SignIn(self,inp:SignInSchema) -> User:
         user = self.repo.GetUserByEmail(inp.email)
