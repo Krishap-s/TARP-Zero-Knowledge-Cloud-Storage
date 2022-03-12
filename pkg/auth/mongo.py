@@ -18,7 +18,6 @@ class Repo:
         del user_dict["derived_key"]
         user = User(**user_dict)
         id = self.db.users.insert_one(user.dict(by_alias=True)).inserted_id
-        print(type(self.db))
         return id
     
     def GetUserByEmail(self,email:EmailStr) -> Union[User,None]:
@@ -27,5 +26,5 @@ class Repo:
             return User(**user_dict)
         return None
     
-    def GetUserById(self,id :BSON) -> User:
-        return self.db.users.find_one({"_id":str(id)})
+    def GetUserById(self,id :BSON) -> Union[User,None]:
+        return self.db.users.find_one({"_id":id})

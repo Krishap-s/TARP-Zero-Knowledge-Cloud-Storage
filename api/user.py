@@ -18,8 +18,7 @@ def RegisterRoute(body:AddUserSchema):
 @UserRouter.post("/login",response_model=GetUserSchema)
 def LoginRoute(body:SignInSchema):
     user = userSvc.SignIn(body)
-    user_dict = user.dict()
-    return GetUserSchema(**user_dict)
+    return user
 
 @UserRouter.get("/get_salt")
 def GetSalt(email:EmailStr):

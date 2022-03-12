@@ -6,6 +6,8 @@ from bson import BSON
 from models.user import User
 from Cryptodome.Hash import SHA256
 from fastapi.exceptions import HTTPException
+import os
+from jose import jwt
 
 class Service():
     repo:Repo = None
@@ -30,7 +32,7 @@ class Service():
         return user.salt
 
 
-    def SignIn(self,inp:SignInSchema) -> User:
+    def SignIn(self,inp:SignInSchema) -> GetUserSchema:
         user = self.repo.GetUserByEmail(inp.email)
         if user == None:
             raise HTTPException(status_code="404",detail="user not found")
@@ -39,7 +41,10 @@ class Service():
         if hasher.hexdigest() != user.derived_key_hash:
             raise HTTPException(status_code="403",detail="invalid credentials")
         else:
-            return user
+            encoded_jwt = jwt.encode({"id":str(user._id)}, os.environ.get("SECRET_KEY"), algorithm="HS256")
+            user_dict = user.dict(by_alias=True)
+            get_user = GetUserSchema(token=encoded_jwt,**user_dict)
+            return get_user
 
         
 

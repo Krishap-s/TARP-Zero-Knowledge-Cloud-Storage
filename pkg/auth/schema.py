@@ -12,6 +12,8 @@ class SignInSchema(BaseModel):
     derived_key:str
 
 class GetUserSchema(BaseModel):
+    _id:str
     name:str
     email:EmailStr
     encrypted_master_password:str
+    token:str
