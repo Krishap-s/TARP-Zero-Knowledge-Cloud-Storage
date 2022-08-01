@@ -33,7 +33,7 @@ class Service():
 
 
     def SignIn(self,inp:SignInSchema) -> GetUserSchema:
-        user = self.repo.GetUserByEmail(inp.email)
+        user = self.repo.GetUserByEmail(inp.email) 
         if user == None:
             raise HTTPException(status_code="404",detail="user not found")
         hasher = SHA256.new()
@@ -41,9 +41,9 @@ class Service():
         if hasher.hexdigest() != user.derived_key_hash:
             raise HTTPException(status_code="403",detail="invalid credentials")
         else:
-            encoded_jwt = jwt.encode({"id":str(user._id)}, os.environ.get("SECRET_KEY"), algorithm="HS256")
+            encoded_jwt = jwt.encode({"id":user.id.hex()}, os.environ.get("SECRET_KEY"), algorithm="HS256")
             user_dict = user.dict(by_alias=True)
-            get_user = GetUserSchema(token=encoded_jwt,**user_dict)
+            get_user = GetUserSchema(access_token=encoded_jwt,**user_dict)
             return get_user
 
         

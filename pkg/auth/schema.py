@@ -16,4 +16,4 @@ class GetUserSchema(BaseModel):
     name:str
     email:EmailStr
     encrypted_master_password:str
-    token:str
+    access_token:str

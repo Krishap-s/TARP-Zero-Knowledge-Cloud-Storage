@@ -1,9 +1,14 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field,validator
 from datetime import datetime
-import bson
+from bson import ObjectId, BSON
+
+def Obj_fact():
+    return ObjectId()
 
 class Base(BaseModel):
-    _id:bson.BSON= Field(default=bson.ObjectId())
-    created_time:datetime = Field(default=datetime.now())
-    updated_time:datetime = Field(default=datetime.now())
-    deleted_time:datetime = Field(default=datetime.now())
+    id:BSON= Field(default_factory=Obj_fact)
+    created_time:datetime = Field(default_factory=datetime.now)
+    updated_time:datetime = Field(default_factory=datetime.now)
+    deleted_time:datetime = Field(default_factory=datetime.now)
+    class Config:
+        fields = {'id': '_id'}

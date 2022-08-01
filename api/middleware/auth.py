@@ -20,14 +20,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        print(token)
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        id: str = payload.get("sub")
+        id: str = payload.get("id")
         if id is None:
             raise credentials_exception
-        oid = bson.ObjectId(id)
-    except:
+        oid = bson.ObjectId(oid=id)
+    except Exception as e:
+        print(repr(e),"a")
         raise credentials_exception
+    print(repr(oid))
     user = userSvc.repo.GetUserById(oid)
+    print(user)
     if user is None:
         raise credentials_exception
     return user

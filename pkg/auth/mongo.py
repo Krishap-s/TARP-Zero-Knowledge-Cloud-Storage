@@ -1,7 +1,7 @@
 from pymongo.database import Database
-from uuid import UUID
 from .schema import AddUserSchema
 from models.user import User
+from bson.objectid import ObjectId
 from bson import BSON
 from pydantic import EmailStr
 from typing import Union
@@ -9,8 +9,8 @@ from typing import Union
 class Repo:
     db:Database = None
 
-    def __init__(self,client:Database) -> None:
-        self.db = client
+    def __init__(self,db:Database) -> None:
+        self.db = db
 
     def AddUser(self,inp :AddUserSchema) -> BSON:
         user_dict = inp.dict(by_alias=True)
@@ -23,8 +23,15 @@ class Repo:
     def GetUserByEmail(self,email:EmailStr) -> Union[User,None]:
         user_dict = self.db.users.find_one({"email":email})
         if user_dict != None:
-            return User(**user_dict)
+            id = user_dict["_id"].binary
+            del user_dict["_id"]
+            return User(**user_dict,_id=id)
         return None
     
     def GetUserById(self,id :BSON) -> Union[User,None]:
-        return self.db.users.find_one({"_id":id})
+        user_dict = self.db.users.find_one({"_id":id})
+        if user_dict != None:
+            id = user_dict["_id"].binary
+            del user_dict["_id"]
+            return User(**user_dict,_id=id)
+        return None
