@@ -7,6 +7,7 @@ from Cryptodome.Random import get_random_bytes
 from Cryptodome.Util import Padding 
 from Cryptodome.Hash import HMAC
 from time import sleep
+import base64
 
 
 url = "http://127.0.0.1:8000/"
@@ -33,14 +34,15 @@ def Login():
     master_and_derived_key = pbkdf2_hmac("sha256","{}:{}".format(email,password).encode(),salt,50000,32)
     derived_key = master_and_derived_key[:len(master_and_derived_key)//2]
     master_key_enc_key = master_and_derived_key[len(master_and_derived_key)//2:]
-    crypt = AES.new(master_key_enc_key,AES.MODE_CBC)
     resp = requests.post(url + "users/login",json={"email":email,"derived_key":derived_key.hex()})
     if resp.status_code in [404,403]:
         print("Invalid credentials")
         exit()
     token = resp.json()["access_token"]
     encrypted_master_key = resp.json()["encrypted_master_password"]
-    master_key = crypt.decrypt(bytes.fromhex(encrypted_master_key))
+    iv = bytes.fromhex(encrypted_master_key)[:16]
+    crypt = AES.new(master_key_enc_key,AES.MODE_CBC,iv=iv)
+    master_key = crypt.decrypt(bytes.fromhex(encrypted_master_key)[16:])
     print("Login successful")
     sleep(5)
 
@@ -53,11 +55,12 @@ def Register():
     password = input("Enter password:")
     salt = get_random_bytes(16)
     master_key = get_random_bytes(32)
+    iv = get_random_bytes(16)
     master_and_derived_key = pbkdf2_hmac("sha256","{}:{}".format(email,password).encode(),salt,50000,32)
     derived_key = master_and_derived_key[:len(master_and_derived_key)//2]
     master_key_enc_key = master_and_derived_key[len(master_and_derived_key)//2:]
-    crypt = AES.new(master_key_enc_key,AES.MODE_CBC)
-    encrypted_master_key = crypt.encrypt(master_key)
+    crypt = AES.new(master_key_enc_key,AES.MODE_CBC,iv=iv)
+    encrypted_master_key = crypt.encrypt(iv + master_key)
     resp = requests.put(url + "users/register",json={"email":email,"derived_key":derived_key.hex(),"name":name,"encrypted_master_password":encrypted_master_key.hex(),"salt":salt.hex()})
     if resp.status_code != 200:
         print("Invalid input")
@@ -115,13 +118,14 @@ def GetFileById():
     resp = requests.get(url + "files/{}/download".format(file_id),auth=BearerAuth(token))
     crypt = AES.new(file_key,AES.MODE_ECB)
     print("Decrypting {}...".format(file_name))
+    hmac = HMAC.new(master_key,resp.content)
+    try:
+        hmac.verify(dirty_hmac)
+    except Exception as e:
+        print(e)
+        print("INVALID HMAC ,FILE HAS BEEN MODIFIED")
+        exit()
     with open(file_name,"wb") as file:
-        hmac = HMAC.new(master_key,resp.content)
-        try:
-            hmac.verify(dirty_hmac)
-        except:
-            print("INVALID HMAC ,FILE HAS BEEN MODIFIED")
-            exit()
         file_data = Padding.unpad(crypt.decrypt(resp.content),16)
         file.write(file_data)
     print("Data written to {}".format(file_name))

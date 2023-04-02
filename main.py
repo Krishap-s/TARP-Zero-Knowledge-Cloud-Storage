@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from api.user import UserRouter
 from api.file import FileRouter
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 app = FastAPI(title="Encrypt Everywhere")
 
